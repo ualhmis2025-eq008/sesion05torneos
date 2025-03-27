@@ -10,6 +10,11 @@ class Torneo {
     private String modalidad;
     private List<Equipo> equipos;
     private String tipo;
+    public Sede getSede() {
+		return sede;
+	}
+
+	private Sede sede;
 
     public Torneo(String nombre, String deporte, String categoria, String modalidad, String tipo) {
         this.nombre = nombre;
@@ -27,6 +32,14 @@ class Torneo {
         if (!equipos.contains(equipo)) {
             equipos.add(equipo);
         }
+    }
+    
+    public void setSede(Sede sede) {
+        if (!sede.getInstalaciones().stream().anyMatch(i -> 
+            i.getDeporteAdecuado().equals(this.deporte))) {
+            throw new IllegalArgumentException("La sede no tiene instalaciones adecuadas para este deporte");
+        }
+        this.sede = sede;
     }
 
 	public String getNombre() {
