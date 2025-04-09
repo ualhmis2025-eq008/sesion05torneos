@@ -28,11 +28,5 @@ class HorarioPartido {
         return fin;
     }
     
-    public void setInicio(LocalDateTime inicio) {
-		this.inicio = inicio;
-	}
 
-	public void setFin(LocalDateTime fin) {
-		this.fin = fin;
-	}
 }
