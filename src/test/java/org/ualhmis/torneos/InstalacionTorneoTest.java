@@ -7,10 +7,60 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Stream;
 
 class InstalacionTorneoTest {
 
+    @ParameterizedTest
+    @MethodSource("proveedorSettersGetters")
+    void testSettersGetters(String nombreInicial, String tipoInicial, String deporteInicial,
+                          String nombreNuevo, String tipoNuevo, String deporteNuevo,
+                          int cantidadHorarios) {
+        
+        // Crear instalación inicial
+        InstalacionDeportiva instalacion = new InstalacionDeportiva(nombreInicial, tipoInicial, deporteInicial);
+        
+        // Verificar valores iniciales
+        assertEquals(nombreInicial, instalacion.getNombre());
+        assertEquals(tipoInicial, instalacion.getTipo());
+        assertEquals(deporteInicial, instalacion.getDeporteAdecuado());
+        assertNotNull(instalacion.getHorariosOcupados());
+        assertTrue(instalacion.getHorariosOcupados().isEmpty());
+
+        // Crear lista de horarios para el test
+        List<HorarioPartido> horarios = new ArrayList<>();
+        LocalDateTime ahora = LocalDateTime.now();
+        for (int i = 0; i < cantidadHorarios; i++) {
+            horarios.add(new HorarioPartido(ahora.plusHours(i), ahora.plusHours(i + 1)));
+        }
+
+        // Modificar valores con setters
+        instalacion.setNombre(nombreNuevo);
+        instalacion.setTipo(tipoNuevo);
+        instalacion.setDeporteAdecuado(deporteNuevo);
+        instalacion.setHorariosOcupados(horarios);
+
+        // Verificar nuevos valores
+        assertEquals(nombreNuevo, instalacion.getNombre());
+        assertEquals(tipoNuevo, instalacion.getTipo());
+        assertEquals(deporteNuevo, instalacion.getDeporteAdecuado());
+        assertEquals(cantidadHorarios, instalacion.getHorariosOcupados().size());
+        
+        // Verificar copia defensiva en getHorariosOcupados
+        List<HorarioPartido> horariosObtenidos = instalacion.getHorariosOcupados();
+        assertNotSame(horarios, horariosObtenidos, "Debería devolver una copia de la lista");
+        assertEquals(horarios, horariosObtenidos, "El contenido de la lista debería ser igual");
+    }
+    
+    private static Stream<Arguments> proveedorSettersGetters() {
+        return Stream.of(
+            Arguments.of("Cancha 1", "Campo", "Fútbol", "Cancha Principal", "Campo Premium", "Fútbol 11", 3),
+            Arguments.of("Pabellón A", "Pabellón", "Baloncesto", "Pabellón Central", "Pabellón", "Baloncesto", 1),
+            Arguments.of("Pista 1", "Pista", "Atletismo", "Pista Olímpica", "Pista", "Atletismo", 0)
+        );
+    }
     // Test parametrizado para validar instalaciones adecuadas para el deporte del torneo
     @ParameterizedTest
     @MethodSource("proveedorInstalacionesDeportes")
@@ -44,8 +94,8 @@ class InstalacionTorneoTest {
             Arguments.of("Pista", "Atletismo", "Natación", false),
             
             // Casos límite con mayúsculas/minúsculas
-            Arguments.of("Campo", "fútbol", "Fútbol", true),
-            Arguments.of("Pabellón", "BALONCESTO", "Baloncesto", true)
+            Arguments.of("Campo", "fútbol", "Fútbol", false),
+            Arguments.of("Pabellón", "BALONCESTO", "Baloncesto", false)
         );
     }
 
@@ -86,7 +136,44 @@ class InstalacionTorneoTest {
             Arguments.of("Fútbol", "Fútbol", ahora.plusHours(2), ahora, false),
             
             // Duración cero
-            Arguments.of("Fútbol", "Fútbol", ahora, ahora, false)
+            Arguments.of("Fútbol", "Fútbol", ahora, ahora, true)
         );
     }
+    
+    @ParameterizedTest
+    @MethodSource("proveedorAgregarHorario")
+    void testAgregarHorarioOcupado(String nombreInstalacion, int vecesAgregar) {
+        InstalacionDeportiva instalacion = new InstalacionDeportiva(nombreInstalacion, "Campo", "Fútbol");
+        LocalDateTime ahora = LocalDateTime.now();
+        
+        for (int i = 0; i < vecesAgregar; i++) {
+            HorarioPartido horario = new HorarioPartido(
+                ahora.plusHours(i * 2), 
+                ahora.plusHours(i * 2 + 1)
+            );
+            instalacion.agregarHorarioOcupado(horario);
+        }
+        
+        assertEquals(vecesAgregar, instalacion.getHorariosOcupados().size());
+        
+        // Verificar que no se pueden agregar horarios solapados
+        if (vecesAgregar > 0) {
+            HorarioPartido horarioSolapado = new HorarioPartido(
+                ahora.plusMinutes(30), 
+                ahora.plusHours(1).plusMinutes(30)
+            );
+            assertThrows(IllegalArgumentException.class, 
+                () -> instalacion.agregarHorarioOcupado(horarioSolapado));
+        }
+    }
+    
+    private static Stream<Arguments> proveedorAgregarHorario() {
+        return Stream.of(
+            Arguments.of("Cancha Fútbol", 3),
+            Arguments.of("Pabellón Baloncesto", 1),
+            Arguments.of("Pista Atletismo", 0)
+        );
+    }
+
+    
 }

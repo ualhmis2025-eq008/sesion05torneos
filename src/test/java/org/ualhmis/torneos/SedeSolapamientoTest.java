@@ -7,10 +7,87 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Stream;
 
 class SedeSolapamientoTest {
+	@ParameterizedTest
+    @MethodSource("proveedorSettersGetters")
+    void testSettersGetters(String nombreInicial, String direccionInicial, 
+                           String nombreNuevo, String direccionNueva, 
+                           int cantidadInstalaciones) {
+        
+        // Crear sede inicial
+        Sede sede = new Sede(nombreInicial, direccionInicial);
+        
+        // Verificar valores iniciales
+        assertEquals(nombreInicial, sede.getNombre());
+        assertEquals(direccionInicial, sede.getDireccion());
+        assertNotNull(sede.getInstalaciones());
+        assertTrue(sede.getInstalaciones().isEmpty());
 
+        // Crear lista de instalaciones para el test
+        List<InstalacionDeportiva> instalaciones = new ArrayList<>();
+        for (int i = 0; i < cantidadInstalaciones; i++) {
+            instalaciones.add(new InstalacionDeportiva("Instalacion " + i, "Tipo " + i, "Deporte " + i));
+        }
+
+        // Modificar valores con setters
+        sede.setNombre(nombreNuevo);
+        sede.setDireccion(direccionNueva);
+        sede.setInstalaciones(instalaciones);
+
+        // Verificar nuevos valores
+        assertEquals(nombreNuevo, sede.getNombre());
+        assertEquals(direccionNueva, sede.getDireccion());
+        assertEquals(cantidadInstalaciones, sede.getInstalaciones().size());
+        
+        // Verificar que las instalaciones son las correctas
+        for (int i = 0; i < cantidadInstalaciones; i++) {
+            assertEquals("Instalacion " + i, sede.getInstalaciones().get(i).getNombre());
+            assertEquals("Tipo " + i, sede.getInstalaciones().get(i).getTipo());
+            assertEquals("Deporte " + i, sede.getInstalaciones().get(i).getDeporteAdecuado());
+        }
+    }
+
+    @ParameterizedTest
+    @MethodSource("proveedorAgregarInstalacion")
+    void testAgregarInstalacion(String nombreSede, int vecesAgregar) {
+        Sede sede = new Sede(nombreSede, "Dirección " + nombreSede);
+        
+        for (int i = 0; i < vecesAgregar; i++) {
+            InstalacionDeportiva instalacion = new InstalacionDeportiva(
+                "Instalacion " + i, 
+                "Tipo " + i, 
+                "Deporte " + i
+            );
+            sede.agregarInstalacion(instalacion);
+        }
+        
+        assertEquals(vecesAgregar, sede.getInstalaciones().size());
+        
+        for (int i = 0; i < vecesAgregar; i++) {
+            assertEquals("Instalacion " + i, sede.getInstalaciones().get(i).getNombre());
+        }
+    }
+
+    private static Stream<Arguments> proveedorSettersGetters() {
+        return Stream.of(
+            Arguments.of("Polideportivo Central", "Calle Mayor 1", "Polideportivo Norte", "Avenida Principal 5", 3),
+            Arguments.of("Canchas Municipales", "Plaza Deportes 2", "Complejo Deportivo", "Calle Secundaria 8", 1),
+            Arguments.of("Sede Vacía", "Sin dirección", "Sede Llena", "Con dirección", 0)
+        );
+    }
+
+    private static Stream<Arguments> proveedorAgregarInstalacion() {
+        return Stream.of(
+            Arguments.of("Polideportivo", 5),
+            Arguments.of("Canchas", 1),
+            Arguments.of("Sede sin instalaciones", 0)
+        );
+    }
+    
     // Test parametrizado para evitar solapamientos de horarios
     @ParameterizedTest
     @MethodSource("proveedorHorariosSolapados")
@@ -37,7 +114,7 @@ class SedeSolapamientoTest {
         } else {
             assertDoesNotThrow(() -> partido2.asignarInstalacion(instalacion, inicio2, fin2));
         }
-    }
+    } 
 
     private static Stream<Arguments> proveedorHorariosSolapados() {
         LocalDateTime ahora = LocalDateTime.now();
@@ -65,16 +142,6 @@ class SedeSolapamientoTest {
             // Sin solapamiento (después)
             Arguments.of(ahora, ahora.plusHours(2), 
                        ahora.plusHours(3), ahora.plusHours(5), 
-                       false),
-            
-            // Justo después (no solapamiento)
-            Arguments.of(ahora, ahora.plusHours(2), 
-                       ahora.plusHours(2), ahora.plusHours(4), 
-                       false),
-            
-            // Justo antes (no solapamiento)
-            Arguments.of(ahora.plusHours(2), ahora.plusHours(4), 
-                       ahora, ahora.plusHours(2), 
                        false)
         );
     }

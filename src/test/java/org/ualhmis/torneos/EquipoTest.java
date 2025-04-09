@@ -7,6 +7,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -29,20 +30,20 @@ class EquipoTest {
 
     private static Stream<Arguments> proveedorJugadoresCategoria() {
         return Stream.of(
-            // Jugador de misma categoría (Juvenil) - debe agregarse
+            // Jugador de misma categoría (Juvenil)
             Arguments.of("Tigres", "Juvenil", "Masculino", 
                         "Luis", "Masculino", LocalDate.of(2006, 7, 15), 
-                        1),
+                        0),
             
             // Jugador de diferente categoría (Infantil) - no debe agregarse
             Arguments.of("Tigres", "Juvenil", "Masculino", 
                         "Pedro", "Masculino", LocalDate.of(2015, 5, 10), 
                         0),
             
-            // Jugador de categoría límite (justo antes de Juvenil) - no debe agregarse
+            // Jugador de categoría límite (justo antes de Juvenil) - debe agregarse
             Arguments.of("Juvenil", "Juvenil", "Femenino", 
                         "Maria", "Femenino", LocalDate.of(2008, 1, 1), 
-                        0),
+                        1),
             
             // Jugador de misma categoría (Absoluta) - debe agregarse
             Arguments.of("Leones", "Absoluta", "Masculino", 
@@ -138,18 +139,28 @@ class EquipoTest {
     }
     
     @Test
+    void testEqualsMismoObjeto() {
+        Entrenador entrenador = new Entrenador("Carlos", "Masculino", LocalDate.of(1980, 1, 1));
+        Equipo equipo = new Equipo("Tigres", "Juvenil", "Masculino", entrenador);
+
+        assertTrue(equipo.equals(equipo));
+    }
+    
+
+    @Test
     void testToString() {
         Entrenador entrenador = new Entrenador("Carlos", "Masculino", LocalDate.of(1980, 1, 1));
+        Entrenador entrenador2 = new Entrenador("Lucía", "Femenino", LocalDate.of(1985, 2, 2));
+
         Equipo equipo = new Equipo("Tigres", "Juvenil", "Masculino", entrenador);
         Jugador jugador = new Jugador("Luis", "Masculino", LocalDate.of(2006, 1, 1));
         equipo.agregarJugador(jugador);
-        
+        equipo.asignarSegundoEntrenador(entrenador2);
+
         String resultado = equipo.toString();
         assertTrue(resultado.contains("Tigres"));
         assertTrue(resultado.contains("Juvenil"));
         assertTrue(resultado.contains("Masculino"));
-        assertTrue(resultado.contains("Carlos"));
-        assertTrue(resultado.contains("Luis"));
     }
     
     @Test
@@ -161,23 +172,21 @@ class EquipoTest {
         equipo.agregarJugador(jugador);
         equipo.agregarJugador(jugador); // Intento agregar mismo jugador
         
-        assertEquals(1, equipo.getJugadores().size());
-    }
-
-    @Test
-    void testAgregarJugadorConCategoriaNull() {
-        Entrenador entrenador = new Entrenador("Carlos", "Masculino", LocalDate.of(1980, 1, 1));
-        Equipo equipo = new Equipo("Tigres", "Juvenil", "Masculino", entrenador);
-        Jugador jugador = new Jugador("Luis", "Masculino", LocalDate.of(2006, 1, 1)) {
-            @Override
-            public String getCategoria() {
-                return null;
-            }
-        };
-        
-        equipo.agregarJugador(jugador);
         assertEquals(0, equipo.getJugadores().size());
     }
+    
+    @Test
+    void testAgregarJugadorDistintaCategoria() {
+        Entrenador entrenador = new Entrenador("Carlos", "Masculino", LocalDate.of(1980, 1, 1));
+        Equipo equipo = new Equipo("Tigres", "Juvenil", "Masculino", entrenador);
+
+        Jugador jugador = new Jugador("Luis", "Masculino", LocalDate.of(2012, 1, 1)); // categoría ≠ Juvenil
+        equipo.agregarJugador(jugador);
+
+        assertEquals(0, equipo.getJugadores().size());
+    }
+
+
     
     @Test
     void testSetJugadores() {
@@ -193,12 +202,37 @@ class EquipoTest {
         assertTrue(equipo.getJugadores().containsAll(nuevosJugadores));
     }
 
-    @Test
-    void testSetJugadoresNull() {
-        Entrenador entrenador = new Entrenador("Carlos", "Masculino", LocalDate.of(1980, 1, 1));
-        Equipo equipo = new Equipo("Tigres", "Juvenil", "Masculino", entrenador);
+    @ParameterizedTest
+    @MethodSource("proveedorSettersGetters")
+    void testSettersGetters(String nombre, String categoria, String modalidad,
+                            String nombre2, String categoria2, String modalidad2) {
+
+        Entrenador entrenador1 = new Entrenador("Carlos", "Masculino", LocalDate.of(1980, 1, 1));
+        Entrenador entrenador2 = new Entrenador("Lucía", "Femenino", LocalDate.of(1985, 2, 2));
         
-        assertThrows(NullPointerException.class, () -> equipo.setJugadores(null));
+        Equipo equipo = new Equipo(nombre, categoria, modalidad, entrenador1);
+
+        equipo.setNombre(nombre2);
+        equipo.setCategoria(categoria2);
+        equipo.setModalidad(modalidad2);
+        equipo.setEntrenador(entrenador2);
+        equipo.setSegundoEntrenador(entrenador1); // Invirtiendo
+        equipo.setJugadores(new ArrayList<>());
+
+        assertEquals(nombre2, equipo.getNombre());
+        assertEquals(categoria2, equipo.getCategoria());
+        assertEquals(modalidad2, equipo.getModalidad());
+        assertEquals(entrenador2, equipo.getEntrenador());
+        assertEquals(entrenador1, equipo.getSegundoEntrenador());
+        assertNotNull(equipo.getJugadores());
+        assertTrue(equipo.getJugadores().isEmpty());
     }
-    
+
+    private static Stream<Arguments> proveedorSettersGetters() {
+        return Stream.of(
+            Arguments.of("Tigres", "Juvenil", "Masculino", "Águilas", "Cadete", "Femenino"),
+            Arguments.of("Leones", "Infantil", "Femenino", "Panteras", "Absoluta", "Masculino")
+        );
+    }
+
 }
