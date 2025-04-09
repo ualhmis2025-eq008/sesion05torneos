@@ -12,31 +12,39 @@ import java.util.stream.Stream;
 
 class JugadorTest {
 
-    @Test
-    void testCategoriaPorEdad() {
-        Jugador jugador1 = new Jugador("Carlos", "Masculino", LocalDate.of(2015, 5, 10));
-        assertEquals("Infantil", jugador1.getCategoria());
-
-        Jugador jugador2 = new Jugador("Luis", "Masculino", LocalDate.of(2010, 3, 15));
-        assertEquals("Cadete", jugador2.getCategoria());
-
-        Jugador jugador3 = new Jugador("Ana", "Femenino", LocalDate.of(2005, 8, 22));
-        assertEquals("Juvenil", jugador3.getCategoria());
-
-        Jugador jugador4 = new Jugador("Pedro", "Masculino", LocalDate.of(2002, 1, 30));
-        assertEquals("Junior", jugador4.getCategoria());
-
-        Jugador jugador5 = new Jugador("Marta", "Femenino", LocalDate.of(1998, 6, 5));
-        assertEquals("Absoluta", jugador5.getCategoria());
+    @ParameterizedTest
+    @MethodSource("proveedorJugadoresYCategorias")
+    void testCategoriaPorEdadParametrizado(LocalDate fechaNacimiento, String categoriaEsperada) {
+        Jugador jugador = new Jugador("Test", "Masculino", fechaNacimiento);
+        assertEquals(categoriaEsperada, jugador.getCategoria());
     }
 
-    @Test
-    void testCreacionJugadorInvalido() {
-        assertThrows(IllegalArgumentException.class, () -> new Jugador("", "Masculino", LocalDate.of(2010, 1, 1)));
-        assertThrows(IllegalArgumentException.class, () -> new Jugador("Juan", "", LocalDate.of(2010, 1, 1)));
-        assertThrows(IllegalArgumentException.class, () -> new Jugador("Juan", "Masculino", null));
+    private static Stream<Arguments> proveedorJugadoresYCategorias() {
+        return Stream.of(
+                Arguments.of(LocalDate.of(2015, 5, 10), "Infantil"),
+                Arguments.of(LocalDate.of(2011, 3, 15), "Cadete"),
+                Arguments.of(LocalDate.of(2010, 8, 22), "Juvenil"),
+                Arguments.of(LocalDate.of(2005, 1, 30), "Junior"),
+                Arguments.of(LocalDate.of(1998, 6, 5), "Absoluta")
+        );
     }
-    
+
+    @ParameterizedTest
+    @MethodSource("proveedorDatosInvalidos")
+    void testCreacionJugadorInvalido(String nombre, String genero, LocalDate fechaNacimiento) {
+        assertThrows(IllegalArgumentException.class, () -> new Jugador(nombre, genero, fechaNacimiento));
+    }
+
+    private static Stream<Arguments> proveedorDatosInvalidos() {
+        return Stream.of(
+                Arguments.of("", "Masculino", LocalDate.of(2010, 1, 1)),         // nombre vacío
+                Arguments.of("Juan", "", LocalDate.of(2010, 1, 1)),              // género vacío
+                Arguments.of("Juan", "Masculino", null),                         // fecha nula
+                Arguments.of(null, "Femenino", LocalDate.of(2005, 3, 3)),        // nombre nulo
+                Arguments.of("Ana", null, LocalDate.of(2007, 7, 7))              // género nulo
+        );
+    }
+
     @ParameterizedTest
     @MethodSource("proveedorEdadesCategorias")
     void testCategoriaPorEdadLimites(LocalDate fechaNacimiento, String categoriaEsperada) {
