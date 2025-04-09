@@ -6,7 +6,8 @@ import java.time.LocalDate;
 // Registro de equipos en torneos con validación de categoría y modalidad
 
 class PartidoTest {
-
+	
+	
     @Test
     void testRegistrarResultado() {
         Entrenador entrenador1 = new Entrenador("Carlos", "Masculino", LocalDate.of(1980, 3, 10));
