@@ -162,18 +162,20 @@ class EquipoTest {
         assertTrue(resultado.contains("Juvenil"));
         assertTrue(resultado.contains("Masculino"));
     }
-    
+
     @Test
     void testAgregarJugadorDuplicado() {
         Entrenador entrenador = new Entrenador("Carlos", "Masculino", LocalDate.of(1980, 1, 1));
         Equipo equipo = new Equipo("Tigres", "Juvenil", "Masculino", entrenador);
-        Jugador jugador = new Jugador("Luis", "Masculino", LocalDate.of(2006, 1, 1));
-        
+
+        Jugador jugador = new Jugador("Luis", "Masculino", LocalDate.of(2008, 4, 1)); // tiene 17 años → categoría "Juvenil"
+
         equipo.agregarJugador(jugador);
-        equipo.agregarJugador(jugador); // Intento agregar mismo jugador
-        
-        assertEquals(0, equipo.getJugadores().size());
+        equipo.agregarJugador(jugador);
+
+        assertEquals(1, equipo.getJugadores().size());
     }
+
     
     @Test
     void testAgregarJugadorDistintaCategoria() {
@@ -234,5 +236,6 @@ class EquipoTest {
             Arguments.of("Leones", "Infantil", "Femenino", "Panteras", "Absoluta", "Masculino")
         );
     }
+
 
 }
